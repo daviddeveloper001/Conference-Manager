@@ -61,4 +61,6 @@ class ConferenceSignUpPage extends Component implements HasForms, HasActions
     {
         return view('livewire.conference-sign-up-page');
     }
+
+    
 }
