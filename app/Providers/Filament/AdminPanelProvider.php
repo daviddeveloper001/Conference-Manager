@@ -17,8 +17,10 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use pxlrbt\FilamentEnvironmentIndicator\EnvironmentIndicatorPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,6 +31,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('/')
             ->login()
+            ->registration()
+            ->passwordReset()
+            ->emailVerification()
+            ->brandName('My Green App')
             ->colors([
                 'primary' => Color::Indigo,
                 'gray' => Color::Slate
@@ -38,11 +44,13 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+            ->sidebarFullyCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make('Firt Group')->icon('heroicon-o-cake')->label('First Group'),
+                NavigationGroup::make('Second Group')->icon('heroicon-o-bolt')->label('Second Group'),
             ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -56,6 +64,15 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+
+            ->plugins([
+                EnvironmentIndicatorPlugin::make()
+                ->color(fn () => match (app()->environment()) {
+                    'production' => null,
+                    'staging' => Color::Orange,
+                    default => Color::Blue,
+                }),
             ]);
     }
 

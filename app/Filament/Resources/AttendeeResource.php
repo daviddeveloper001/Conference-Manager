@@ -2,29 +2,64 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms;
+use Filament\Tables;
+use Filament\Forms\Get;
+use App\Models\Attendee;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Awcodes\Shout\Components\Shout;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\AttendeeResource\Pages;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\AttendeeResource\RelationManagers;
 use App\Filament\Resources\AttendeeResource\Widgets\AttendeeChartWidget;
 use App\Filament\Resources\AttendeeResource\Widgets\AttendeesStatsWidgets;
-use App\Models\Attendee;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AttendeeResource extends Resource
 {
     protected static ?string $model = Attendee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    //protected static ?string $navigationIcon = 'heroicon-o-user-group';
+
+    protected static ?string $navigationGroup = 'Firts Group';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Attendee::where('is_paid', false)->count();
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Conference' => $record->conference->name,
+        ];
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
 
     public static function form(Form $form): Form
     {
         return $form
+        
             ->schema([
+                Shout::make('warn-price')
+                    ->visible(function (Get $get) {
+                        return $get('ticket_cost') > 500;
+                    })
+                    ->columnSpanFull()
+                    ->type('warning')
+                    ->content( function(Get $get){
+                        $price = $get('ticket_cost');
+                        return 'The is . ' . $price - 500 . ' more than the average ticket price';
+                    }),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -33,6 +68,7 @@ class AttendeeResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('ticket_cost')
+                    ->lazy()
                     ->required()
                     ->numeric(),
                 Forms\Components\Toggle::make('is_paid')
